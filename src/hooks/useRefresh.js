@@ -1,47 +1,37 @@
 import { useEffect, useRef, useCallback } from "react";
-import { ipcRenderer } from 'electron';
 
 export default (action, interval) => {
   const intervalRef = useRef(null);
 
-  useEffect(() => {   
-    ipcRenderer.on("app:focus", () => {
-      console.log("starting refresh");
-      action();
-      refresh();
-    });
-
-    ipcRenderer.on("app:blur", () => {
-      console.log("cancelling refresh");
-      cancel();
-    });
-
-    return () => {
-      ipcRenderer.removeListener("app:focus");
-      ipcRenderer.removeListener("app:blur");
-    }
-  }, []);
-
   const refresh = useCallback(() => {
-    if (intervalRef.current !== null) {
+    if (intervalRef.current !== null) 
       return;
-    }
 
+    action();
     intervalRef.current = setInterval(() => {
-      // console.log("refreshing");
+      console.log("refreshing");
       action();
     }, interval);
   }, [action, interval]);
 
   const cancel = useCallback(() => {
-    if (intervalRef.current === null) {
+    if (intervalRef.current === null)
       return;
-    }
 
-    // console.log("cancelling refresh");
+    console.log("cancelling refresh");
     clearInterval(intervalRef.current);
     intervalRef.current = null;
   }, [intervalRef]);
 
-  return { refresh, cancel };
+  useEffect(() => {
+    window.addEventListener("focus", refresh);
+    window.addEventListener("blur", cancel);
+
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("blur", cancel);
+    };
+  }, [refresh, cancel]);
+
+  return [ refresh, cancel ];
 };

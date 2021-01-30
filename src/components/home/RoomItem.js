@@ -1,15 +1,23 @@
 import React, { useRef } from "react";
-import { convertHSBToColor, compatibleText } from "../utils";
+import { Card, Icon, Checkbox } from "semantic-ui-react";
+import { convertHSBToColor, compatibleText } from "../../utils";
 
-const RoomItem = ({ room, toggle, alert, active, onSelect, onDim }) => {
+const RoomItem = ({ group, toggle, alert, active, onSelect, onDim }) => {
   const colors = [
     ...new Set(
-      room.colors
+      group.colors
         .filter(light => light.hue)
         .map(light => convertHSBToColor(light))
         .sort()
     )
   ];
+  
+  if (colors.length === 0) {
+    colors.push(
+      ...new Set(group.colors.map(light => convertHSBToColor(light)).sort())
+    );
+  }
+
   const textColor = compatibleText(colors[0] || "#FFFFFF");
   // const iconColor = compatibleText(colors[colors.length - 1] || "#FFFFFF");
 
@@ -21,27 +29,26 @@ const RoomItem = ({ room, toggle, alert, active, onSelect, onDim }) => {
     }
 
     throttle.current = bri;
-    onDim({ ...room, action: { bri } });
+    onDim({ ...group, action: { bri } });
     setTimeout(() => {
       throttle.current = null;
     }, 500);
   };
 
   const handleSelect = event => {
-    onSelect(room);
+    onSelect(group);
     event.stopPropagation();
   };
 
   const handleAlert = event => {
     if (event.ctrlKey) {
-      alert(room);
+      alert(group);
       event.stopPropagation();
     }
-  }
+  };
 
   return (
-    <div
-      className="ui card"
+    <Card
       style={{
         backgroundImage: `linear-gradient(to right, ${
           colors.length > 1 ? colors : [colors[0], colors[0]]
@@ -50,44 +57,41 @@ const RoomItem = ({ room, toggle, alert, active, onSelect, onDim }) => {
       }}
       onClick={handleSelect}
     >
-      <div className="content">
+      <Card.Content>
         <div
           style={{ color: textColor, opacity: 0.7, userSelect: "none" }}
           onClick={handleAlert}
         >
-          {room.name}
-          <span className="ui right floated icon">
-            <i
-              className={`${active ? "check" : null} icon`}
-              style={{ color: textColor, opacity: 0.7 }}
-            />
-          </span>
+          {group.name}
+          <Icon
+            className="right floated"
+            name={active ? "check" : null}
+            style={{ color: textColor, opacity: 0.7 }}
+          />
         </div>
-      </div>
-      <div className="extra content" style={{ backgroundColor: "#FFFFFF48" }}>
+      </Card.Content>
+      <Card.Content extra style={{ backgroundColor: "#FFFFFF48" }}>
         <div className="slidecontainer">
           <input
             className="slide"
             type="range"
             min={0}
             max={254}
-            value={room.action.bri}
+            value={group.action.bri}
             onChange={event => onChangeBrightness(Number(event.target.value))}
           />
         </div>
-      </div>
-      <div className="extra content" style={{ backgroundColor: "#FFFFFF48" }}>
-        <span className="ui fitted right floated toggle checkbox">
-          <input
-            type="checkbox"
-            checked={room.state.any_on}
-            onChange={() => toggle(room)}
-            // disabled={!light.state.reachable}
-          />
-          <label></label>
-        </span>
-      </div>
-    </div>
+      </Card.Content>
+      <Card.Content extra style={{ backgroundColor: "#FFFFFF48" }}>
+        <Checkbox
+          className="right floated"
+          fitted
+          toggle
+          checked={group.state.any_on}
+          onChange={() => toggle(group)}
+        />
+      </Card.Content>
+    </Card>
   );
 };
 

@@ -4,5 +4,5 @@ const deviceAddress = localStorage.getItem("ip");
 const username = localStorage.getItem("username");
 
 export default axios.create({
-  baseURL: `http://${deviceAddress}/api/${username}`
+  baseURL: `https://${deviceAddress}/api/${username}`
 });
